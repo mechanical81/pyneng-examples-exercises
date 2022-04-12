@@ -16,3 +16,22 @@
 """
 
 mac = "AAAA:BBBB:CCCC"
+
+template = "{:b}"*12
+
+mac_str = mac.replace(":","")
+mac_list = list(mac_str)
+print(template.format(
+    int(mac_list[0],16),
+    int(mac_list[1],16),
+    int(mac_list[2],16),
+    int(mac_list[3],16),
+    int(mac_list[4],16),
+    int(mac_list[5],16),
+    int(mac_list[6],16),
+    int(mac_list[7],16),
+    int(mac_list[8],16),
+    int(mac_list[9],16),
+    int(mac_list[10],16),
+    int(mac_list[11],16)
+    ))
