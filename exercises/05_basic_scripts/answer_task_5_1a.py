@@ -45,7 +45,7 @@ london_co = {
     },
 }
 
-
-hostname = input("Введите имя устройства: ")
+device = input("Введите имя устройства: ")
 parameter = input("Введите имя параметра: ")
-print(london_co[hostname][parameter])
+
+print(london_co[device][parameter])

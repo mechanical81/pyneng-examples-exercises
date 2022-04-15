@@ -50,7 +50,8 @@ london_co = {
     },
 }
 
-hostname = input("Введите имя устройства: ")
-host_params = london_co[hostname].keys()
-parameter = input("Введите имя параметра ({}): ".format(", ".join(host_params)))
-print(london_co[hostname].get(parameter, "Такого параметра нет"))
+device = input("Введите имя устройства: ")
+params = ", ".join(london_co[device].keys())
+parameter = input(f"Введите имя параметра ({params}): ")
+
+print(london_co[device].get(parameter, "Такого параметра нет"))
