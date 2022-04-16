@@ -16,7 +16,7 @@ mac = ["aabb:cc80:7000", "aabb:dd80:7340", "aabb:ee80:7000", "aabb:ff80:7000"]
 
 result = []
 
-for macaddr in mac:
-    result.append(macaddr.replace(':', '.'))
+for m in mac:
+    result.append(m.replace(":", "."))
 
 print(result)
