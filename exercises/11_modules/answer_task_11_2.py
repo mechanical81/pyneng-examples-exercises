@@ -28,6 +28,9 @@ Cгенерировать топологию, которая соответст�
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 
 """
+from task_11_1 import parse_cdp_neighbors
+from pprint import pprint
+
 infiles = [
     "sh_cdp_n_sw1.txt",
     "sh_cdp_n_r1.txt",
@@ -35,16 +38,17 @@ infiles = [
     "sh_cdp_n_r3.txt",
 ]
 
-from task_11_1 import parse_cdp_neighbors
-
 
 def create_network_map(filenames):
-    result = {}
-    for file in filenames:
-        with open(file) as f:
-            cdp_topology = parse_cdp_neighbors(f.read())
-            result.update(cdp_topology)
-    return result
+    network_map = {}
 
-if __name__ == '__main__':
-    print(create_network_map(infiles))
+    for filename in filenames:
+        with open(filename) as show_command:
+            parsed = parse_cdp_neighbors(show_command.read())
+            network_map.update(parsed)
+    return network_map
+
+
+if __name__ == "__main__":
+    topology = create_network_map(infiles)
+    pprint(topology)

@@ -82,16 +82,19 @@ infiles = [
 ]
 
 
-from task_11_2 import create_network_map
-from draw_network_graph import draw_topology
-
-
 def unique_network_map(topology_dict):
-    result = topology_dict.copy()
-    for intf in topology_dict:
-        if intf in result.values():
-            del result[intf]
-    return result
+    network_map = {}
+    for key, value in topology_dict.items():
+        if not network_map.get(value) == key:
+            network_map[key] = value
+    return network_map
 
-if __name__ == '__main__':
-    draw_topology(unique_network_map(create_network_map(infiles)))
+
+# второй вариант решения
+def unique_network_map(topology_dict):
+    network_map = {}
+    for key, value in topology_dict.items():
+        key, value = sorted([key, value])
+        network_map[key] = value
+    return network_map
+
