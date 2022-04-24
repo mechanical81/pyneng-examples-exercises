@@ -36,31 +36,22 @@
 в файл topology.yaml. Он понадобится в следующем задании.
 
 """
-
 import yaml
-from pprint import pprint
-from task_17_3 import parse_sh_cdp_neighbors 
+import glob
+from task_17_3 import parse_sh_cdp_neighbors
 
-def generate_topology_from_cdp(list_of_files, save_to_filename = None):
-    result = {}
 
-    for infile in list_of_files:
-        with open(infile) as f_in:
-            subresult = parse_sh_cdp_neighbors(f_in.read())
-            result.update(subresult)
+def generate_topology_from_cdp(list_of_files, save_to_filename=None):
+    topology = {}
+    for filename in list_of_files:
+        with open(filename) as f:
+            topology.update(parse_sh_cdp_neighbors(f.read()))
     if save_to_filename:
-        with open(save_to_filename, 'w') as f_out:
-            yaml.dump(result, f_out)
-    return result
+        with open(save_to_filename, "w") as f_out:
+            yaml.dump(topology, f_out, default_flow_style=False)
+    return topology
 
-if __name__ == '__main__':
-    filenames = [
-        'sh_cdp_n_sw1.txt',
-        'sh_cdp_n_r1.txt',
-        'sh_cdp_n_r2.txt',
-        'sh_cdp_n_r3.txt',
-        'sh_cdp_n_r4.txt',
-        'sh_cdp_n_r5.txt',
-        'sh_cdp_n_r6.txt'       
-    ]
-    pprint( generate_topology_from_cdp(filenames, 'cdp.yaml') )
+
+if __name__ == "__main__":
+    f_list = glob.glob("sh_cdp_n_*")
+    print(generate_topology_from_cdp(f_list, save_to_filename="topology.yaml"))
