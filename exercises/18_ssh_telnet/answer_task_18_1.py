@@ -17,12 +17,12 @@
 с помощью функции send_show_command (эта часть кода написана).
 
 """
+from netmiko import ConnectHandler
 import yaml
-import netmiko
 
 
 def send_show_command(device, command):
-    with netmiko.ConnectHandler(**device) as ssh:
+    with ConnectHandler(**device) as ssh:
         ssh.enable()
         result = ssh.send_command(command)
     return result
