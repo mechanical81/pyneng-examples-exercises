@@ -23,44 +23,28 @@
 а затем запустить эту функцию в разных потоках для разных
 IP-адресов с помощью concurrent.futures (это надо сделать в функции ping_ip_addresses).
 """
-
-
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 
-def ping_ip_addresses(ip_list, limit = 3):
-    ping_success = []
-    ping_bad = []
 
-    with ThreadPoolExecutor(max_workers = limit) as executor:
-        future_list = []
-        for ip_address in ip_list:
-            future = executor.submit(is_ping_success, ip_address)
-            future_list.append(future)
-        for ip_address, future in zip(ip_list, future_list):
-            if future.result():
-                ping_success.append(ip_address)
-            else:
-                ping_bad.append(ip_address)
-    
-    return ping_success, ping_bad
-        
+def ping_ip(ip):
+    result = subprocess.run(["ping", "-c", "3", "-n", ip], stdout=subprocess.DEVNULL)
+    ip_is_reachable = result.returncode == 0
+    return ip_is_reachable
 
 
-def is_ping_success(ip_address):
-    result = subprocess.run(['ping', '-c', '3', '-n', ip_address], stdout = subprocess.PIPE)
-    if result.returncode == 0:
-        return True
-    else:
-        return False
+def ping_ip_addresses(ip_list, limit=3):
+    reachable = []
+    unreachable = []
+    with ThreadPoolExecutor(max_workers=limit) as executor:
+        results = executor.map(ping_ip, ip_list)
+    for ip, status in zip(ip_list, results):
+        if status:
+            reachable.append(ip)
+        else:
+            unreachable.append(ip)
+    return reachable, unreachable
 
 
-if __name__ == '__main__':
-    ip_list = [
-        '8.8.8.8',
-        '128.0.0.1',
-        '9.9.9.9',
-        '128.0.0.2'
-    ]
-
-    print(ping_ip_addresses(ip_list, 3))
+if __name__ == "__main__":
+    print(ping_ip_addresses(["8.8.8.8", "192.168.100.22", "192.168.100.1"]))
