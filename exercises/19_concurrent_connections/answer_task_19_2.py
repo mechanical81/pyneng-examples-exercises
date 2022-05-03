@@ -34,39 +34,31 @@ Ethernet0/1                unassigned      YES NVRAM  administratively down down
 
 Проверить работу функции на устройствах из файла devices.yaml
 """
-
-
-import yaml
-from netmiko import ConnectHandler
+from itertools import repeat
 from concurrent.futures import ThreadPoolExecutor
+
+from netmiko import ConnectHandler
+import yaml
 
 
 def send_show_command(device, command):
     with ConnectHandler(**device) as ssh:
         ssh.enable()
-        output = ssh.send_command(command)
-        output = ssh.find_prompt() + command + "\n" + output + "\n"
-        return output
-    
+        result = ssh.send_command(command)
+        prompt = ssh.find_prompt()
+    return f"{prompt}{command}\n{result}\n"
 
 
-def send_show_command_to_devices(devices, command, filename, limit = 3):
-    future_list = []
-    with ThreadPoolExecutor(max_workers = limit) as executor, open(filename, 'w') as outfile:
-        for device in devices:
-            future = executor.submit(send_show_command, device, command)
-            future_list.append(future)
-        
-        for future in future_list:
-            outfile.write(future.result())
+def send_show_command_to_devices(devices, command, filename, limit=3):
+    with ThreadPoolExecutor(max_workers=limit) as executor:
+        results = executor.map(send_show_command, devices, repeat(command))
+        with open(filename, "w") as f:
+            for output in results:
+                f.write(output)
 
 
-
-
-
-
-if __name__ == '__main__':
-    with open('devices.yaml') as f:
+if __name__ == "__main__":
+    command = "sh ip int br"
+    with open("devices.yaml") as f:
         devices = yaml.safe_load(f)
-    
-    send_show_command_to_devices(devices, 'sh ip int bri', 'out.txt') 
+    send_show_command_to_devices(devices, command, "result.txt")
