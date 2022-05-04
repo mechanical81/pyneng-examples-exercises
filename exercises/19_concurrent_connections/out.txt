@@ -1,24 +1,16 @@
-R1#sh ip int br
-Interface                  IP-Address      OK? Method Status                Protocol
-FastEthernet0/0            192.168.100.1   YES NVRAM  up                    up      
-FastEthernet0/1            unassigned      YES NVRAM  administratively down down    
-R1#sh int desc
-Interface                      Status         Protocol Description
-Fa0/0                          up             up       
-Fa0/1                          admin down     down     
-R2#sh int desc
-Interface                      Status         Protocol Description
-Fa0/0                          up             up       
-Fa0/1                          admin down     down     
-R3#sh ip int br
-Interface                  IP-Address      OK? Method Status                Protocol
-FastEthernet0/0            192.168.100.3   YES NVRAM  up                    up      
-FastEthernet0/1            unassigned      YES NVRAM  administratively down down    
-R3#sh ip route | ex -
-
-Gateway of last resort is not set
-
-      192.168.100.0/24 is variably subnetted, 2 subnets, 2 masks
-C        192.168.100.0/24 is directly connected, FastEthernet0/0
-L        192.168.100.3/32 is directly connected, FastEthernet0/0
-
+config term
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#router ospf 55
+R2(config-router)#network 0.0.0.0 255.255.255.255 area 0
+R2(config-router)#end
+R2#config term
+Enter configuration commands, one per line.  End with CNTL/Z.
+R3(config)#router ospf 55
+R3(config-router)#network 0.0.0.0 255.255.255.255 area 0
+R3(config-router)#end
+R3#config term
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#router ospf 55
+R1(config-router)#network 0.0.0.0 255.255.255.255 area 0
+R1(config-router)#end
+R1#
