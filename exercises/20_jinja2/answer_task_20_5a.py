@@ -37,81 +37,55 @@
 интерфейсов, но при этом не проверяет настроенные номера тунелей и другие команды.
 Они должны быть, но тест упрощен, чтобы было больше свободы выполнения.
 """
-
+import re
 
 import yaml
-import re
 from netmiko import ConnectHandler
-from pprint import pprint
 from task_20_5 import create_vpn_config
 
-data = {
-    "tun_num": None,
-    "wan_ip_1": "192.168.100.1",
-    "wan_ip_2": "192.168.100.2",
-    "tun_ip_1": "10.0.1.1 255.255.255.252",
-    "tun_ip_2": "10.0.1.2 255.255.255.252",
-}
 
-
-def send_show_command(device, command):
-    with ConnectHandler(**device) as ssh:
-        ssh.enable()
-        output = ssh.send_command(command)
-        return output
-
-def send_config_command(device, command):
-    with ConnectHandler(**device) as ssh:
-        ssh.enable()
-        output = ssh.send_config_set(command)
-        return output
-
-def min_free_num(list1, list2):
-    max_list1 = max(list1) if list1 else 0
-    max_list2 = max(list2) if list2 else 0
-    if max_list1 > max_list2:
-        max_num = max_list1
+def get_free_tunnel_number(src, dst):
+    nums = [int(num) for num in re.findall(r"Tunnel(\d+)", src + dst)]
+    if not nums:
+        return 0
+    diff = set(range(min(nums), max(nums) + 1)) - set(nums)
+    if diff:
+        return min(diff)
     else:
-        max_num = max_list2
-    for num in range(max_num + 1):
-        if (num not in list1) and (num not in list2):
-            break
-    return num
+        return max(nums) + 1
 
 
-
-def configure_vpn(src_device_params, dst_device_params, src_template, dst_template, vpn_data_dict):
-    show_tunnels_command = 'show run | include Tunnel'
-    show_out_1 = send_show_command(src_device_params, show_tunnels_command)
-    show_out_2 = send_show_command(dst_device_params, show_tunnels_command)
-    regexp = r'interface Tunnel(\d+)'
-    tunnel_nums_1 = re.findall(regexp, show_out_1)
-    tunnel_nums_2 = re.findall(regexp, show_out_2)
-    tunnel_nums_1_int = [int(item) for item in tunnel_nums_1]
-    tunnel_nums_2_int = [int(item) for item in tunnel_nums_2]
-    data_dict = vpn_data_dict.copy()
-    data_dict['tun_num'] = min_free_num(tunnel_nums_1_int, tunnel_nums_2_int)
-
-    tmpl_src, tmpl_dst = create_vpn_config(src_template, dst_template, data_dict)
-    output1 = send_config_command(src_device_params, tmpl_src.split('\n'))
-    output2 = send_config_command(dst_device_params, tmpl_dst.split('\n'))
-    
+def configure_vpn(
+    src_device_params, dst_device_params, src_template, dst_template, vpn_data_dict
+):
+    with ConnectHandler(**src_device_params) as src, ConnectHandler(
+        **dst_device_params
+    ) as dst:
+        src.enable()
+        dst.enable()
+        tunnels_src = src.send_command("sh run | include ^interface Tunnel")
+        tunnels_dst = dst.send_command("sh run | include ^interface Tunnel")
+        tun_num = get_free_tunnel_number(tunnels_src, tunnels_dst)
+        vpn_data_dict["tun_num"] = tun_num
+        vpn1, vpn2 = create_vpn_config(src_template, dst_template, vpn_data_dict)
+        output1 = src.send_config_set(vpn1.split("\n"))
+        output2 = dst.send_config_set(vpn2.split("\n"))
     return output1, output2
 
 
-if __name__ == '__main__':
-    with open('20_jinja2/devices.yaml') as f:
+if __name__ == "__main__":
+    template1 = "templates/gre_ipsec_vpn_1.txt"
+    template2 = "templates/gre_ipsec_vpn_2.txt"
+
+    data = {
+        "tun_num": None,
+        "wan_ip_1": "192.168.100.1",
+        "wan_ip_2": "192.168.100.2",
+        "tun_ip_1": "10.0.1.1 255.255.255.252",
+        "tun_ip_2": "10.0.1.2 255.255.255.252",
+    }
+
+    with open("devices.yaml") as f:
         devices = yaml.safe_load(f)
-    
-    # print(min_free_num( [0, 1, 2, 6], [] ))
-
-    output = configure_vpn(
-        devices[0],
-        devices[1],
-        '20_jinja2/templates/gre_ipsec_vpn_1.txt',
-        '20_jinja2/templates/gre_ipsec_vpn_2.txt',
-        data
-    )
-
-    pprint(output)
-
+        r1, r2 = devices[:2]
+    configure_vpn(r1, r2, template1, template2, data)
