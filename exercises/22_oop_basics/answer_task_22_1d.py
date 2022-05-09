@@ -45,67 +45,38 @@ Cоединение с одним из портов существует
 
 """
 
-
-from pprint import pprint
-
-
-topology_example = {
-    ("R1", "Eth0/0"): ("SW1", "Eth0/1"),
-    ("R2", "Eth0/0"): ("SW1", "Eth0/2"),
-    ("R2", "Eth0/1"): ("SW2", "Eth0/11"),
-    ("R3", "Eth0/0"): ("SW1", "Eth0/3"),
-    ("R3", "Eth0/1"): ("R4", "Eth0/0"),
-    ("R3", "Eth0/2"): ("R5", "Eth0/0"),
-    ("SW1", "Eth0/1"): ("R1", "Eth0/0"),
-    ("SW1", "Eth0/2"): ("R2", "Eth0/0"),
-    ("SW1", "Eth0/3"): ("R3", "Eth0/0"),
-}
-
-
 class Topology:
     def __init__(self, topology_dict):
         self.topology = self._normalize(topology_dict)
-    
+
     def _normalize(self, topology_dict):
-        result = {}
-        for key, val in topology_dict.items():
-            if key not in result.values():
-                result[key] = val
-        return result
-    
-    def delete_link(self, intf1, intf2):
-        if self.topology.get(intf1) == intf2:
-            del self.topology[intf1]
-        elif self.topology.get(intf2) == intf1:
-            del self.topology[intf2]
+        normalized_topology = {}
+        for box, neighbor in topology_dict.items():
+            if not neighbor in normalized_topology:
+                normalized_topology[box] = neighbor
+        return normalized_topology
+
+    def delete_link(self, from_port, to_port):
+        if from_port in self.topology and self.topology[from_port] == to_port:
+            del self.topology[from_port]
+        elif to_port in self.topology and self.topology[to_port] == from_port:
+            del self.topology[to_port]
         else:
             print("Такого соединения нет")
-    
-    def delete_node(self, hostname):
-        is_deleted = False
-        links = list(self.topology.items())
-        for key, val in links:
-            if key[0] == hostname or val[0] == hostname:
-                del self.topology[key]
-                is_deleted = True
-        if not is_deleted:
+
+    def delete_node(self, node):
+        original_size = len(self.topology)
+        for src, dest in list(self.topology.items()):
+            if node in src or node in dest:
+                del self.topology[src]
+        if original_size == len(self.topology):
             print("Такого устройства нет")
-    
-    def add_link(self, intf1, intf2):
-        get_intf1 = self.topology.get(intf1)
-        get_intf2 = self.topology.get(intf2)
-        if get_intf1 == intf2 or get_intf2 == intf1:
+
+    def add_link(self, src, dest):
+        keys_and_values = self.topology.keys() | self.topology.values()
+        if self.topology.get(src) == dest:
             print("Такое соединение существует")
-        elif get_intf1 or get_intf2:
+        elif src in keys_and_values or dest in keys_and_values:
             print("Cоединение с одним из портов существует")
         else:
-            self.topology[intf1] = intf2
-
-            
-
-if __name__ == '__main__':
-    top = Topology(topology_example)
-    pprint(top.topology)
-    top.add_link(('R3', 'Eth0/2'), ('R5', 'Eth0/0'))
-    print('=' * 25)
-    pprint(top.topology)
+            self.topology[src] = dest
