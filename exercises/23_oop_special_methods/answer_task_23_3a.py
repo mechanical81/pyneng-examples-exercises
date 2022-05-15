@@ -29,43 +29,20 @@ In [2]: for link in top:
 
 Проверить работу класса.
 """
-from pprint import pprint
-
-
-topology_example = {
-    ("R1", "Eth0/0"): ("SW1", "Eth0/1"),
-    ("R2", "Eth0/0"): ("SW1", "Eth0/2"),
-    ("R2", "Eth0/1"): ("SW2", "Eth0/11"),
-    ("R3", "Eth0/0"): ("SW1", "Eth0/3"),
-    ("R3", "Eth0/1"): ("R4", "Eth0/0"),
-    ("R3", "Eth0/2"): ("R5", "Eth0/0"),
-    ("SW1", "Eth0/1"): ("R1", "Eth0/0"),
-    ("SW1", "Eth0/2"): ("R2", "Eth0/0"),
-    ("SW1", "Eth0/3"): ("R3", "Eth0/0"),
-}
-
 
 class Topology:
     def __init__(self, topology_dict):
-        result = {}
-        for key, val in topology_dict.items():
-            if key not in result.values():
-                result[key] = val
-        self.topology = result
+        self.topology = self._normalize(topology_dict)
+
+    def _normalize(self, topology_dict):
+        normalized_topology = {}
+        for box, neighbor in topology_dict.items():
+            if not neighbor in normalized_topology:
+                normalized_topology[box] = neighbor
+        return normalized_topology
 
     def __add__(self, other):
-        result = {}
-        result.update(self.topology)
-        result.update(other.topology)
-        return Topology(result)
+        return Topology({**self.topology, **other.topology})
 
-    def __getitem__(self, index):
-        topology_as_list = [(key, val) for key, val in self.topology.items()]
-        return(topology_as_list[index])
-
-
-
-if __name__ == '__main__':
-    top = Topology(topology_example)
-    for link in top:
-        print(link)
+    def __iter__(self):
+        return iter(self.topology.items())

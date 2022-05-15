@@ -59,8 +59,6 @@ In [10]: t2.topology
 Out[10]: {('R1', 'Eth0/4'): ('R7', 'Eth0/0'), ('R1', 'Eth0/6'): ('R9', 'Eth0/0')}
 """
 
-from pprint import pprint
-
 topology_example = {
     ("R1", "Eth0/0"): ("SW1", "Eth0/1"),
     ("R2", "Eth0/0"): ("SW1", "Eth0/2"),
@@ -78,30 +76,22 @@ topology_example2 = {
     ("R1", "Eth0/6"): ("R9", "Eth0/0"),
 }
 
-
-
 class Topology:
     def __init__(self, topology_dict):
-        result = {}
-        for key, val in topology_dict.items():
-            if key not in result.values():
-                result[key] = val
-        self.topology = result
+        self.topology = self._normalize(topology_dict)
+
+    def _normalize(self, topology_dict):
+        normalized_topology = {}
+        for box, neighbor in topology_dict.items():
+            if not neighbor in normalized_topology:
+                normalized_topology[box] = neighbor
+        return normalized_topology
 
     def __add__(self, other):
-        result = {}
-        result.update(self.topology)
-        result.update(other.topology)
-        return Topology(result)
+        copy_topology = self.topology.copy()
+        copy_topology.update(other.topology)
+        return Topology(copy_topology)
 
-
-
-if __name__ == '__main__':
-    t1 = Topology(topology_example)
-    pprint( t1.topology)
-    t2 = Topology(topology_example2)
-    pprint( t2.topology)
-    t3 = t1+t2
-    pprint( t3.topology)
-    pprint( t1.topology)
-    pprint( t2.topology)
+    # второй вариант решения
+    def __add__(self, other):
+        return Topology({**self.topology, **other.topology})
